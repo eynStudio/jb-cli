@@ -20,7 +20,10 @@
     },
     "homepage": "https://github.com/eynStudio/jb-cli#readme",
     "scripts": {},
-    "dependencies": {},
+    "dependencies": {
+        "chalk": "^2.3.0",
+        "commander": "^2.12.2"
+    },
     "devDependencies": {},
     "engines": {
         "node": ">=6.0.0"
