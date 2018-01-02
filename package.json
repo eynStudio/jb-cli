@@ -22,7 +22,8 @@
     "scripts": {},
     "dependencies": {
         "chalk": "^2.3.0",
-        "commander": "^2.12.2"
+        "commander": "^2.12.2",
+        "user-home": "^2.0.0"
     },
     "devDependencies": {},
     "engines": {
