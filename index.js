@@ -8,14 +8,17 @@ const chalk = require('chalk')
 const path = require('path')
 const ora = require('ora')
 const home = require('user-home')
+const gen = require('./lib/gen')
 const vue = require('./lib/vue')
 const vueNode = require('./lib/vue-node')
 const inquirer = require('inquirer')
 const rm = require('rimraf').sync
+const tildify = require('tildify')
+const logger = require('./lib/logger')
 
 program
     .usage('<template-name> [project-name]')
-
+    .option('--offline', 'use cached template')
 
 program.on('--help', () => {
     console.log('  Examples:')
@@ -39,10 +42,10 @@ const to = path.resolve(rawName || '.')
 const clone = program.clone || false
 
 const tmp = path.join(home, '.jb-seeds', template.replace(/\//g, '-'))
-if (program.offline) {
-    console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
-    template = tmp
-}
+// if (program.offline) {
+//     console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
+//     template = tmp
+// }
 
 
 console.log()
@@ -70,23 +73,34 @@ process.on('exit', () => {
 run()
 
 function run() {
-    vue.start()
-    vueNode.start()
+    // vue.start()
+    // vueNode.start()
     console.log("xx", tmp, template)
 
-    const spinner = ora('downloading template')
-    spinner.start()
-    if (exists(tmp)) rm(tmp)
+    if (program.offline) {
+        console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
+        gen(name, tmp, to, err => {
+            // if (err) logger.fatal(err)
+            console.log()
+            console.log('Generated "%s".', name)
+        })
 
-    const officialTemplate = 'eynStudio/jb-seed#' + template
+    } else {
 
-    download(officialTemplate, tmp, { clone }, err => {
-        spinner.stop()
-        if (err) logger.fatal('Failed to download repo ' + template + ': ' + err.message.trim())
-        // generate(name, tmp, to, err => {
-        //     if (err) logger.fatal(err)
-        //     console.log()
-        //     logger.success('Generated "%s".', name)
-        // })
-    })
+        const spinner = ora('downloading template')
+        spinner.start()
+        if (exists(tmp)) rm(tmp)
+
+        const officialTemplate = 'eynStudio/jb-seed#' + template
+
+        download(officialTemplate, tmp, { clone }, err => {
+            spinner.stop()
+            if (err) logger.fatal('Failed to download repo ' + template + ': ' + err.message.trim())
+            gen(name, tmp, to, err => {
+                // if (err) logger.fatal(err)
+                console.log()
+                console.log('Generated "%s".', name)
+            })
+        })
+    }
 }
