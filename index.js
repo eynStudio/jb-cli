@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 'use strict'
 
+const download = require('download-git-repo')
 const program = require('commander')
 const exists = require('fs').existsSync
 const chalk = require('chalk')
 const path = require('path')
+const ora = require('ora')
 const home = require('user-home')
 const vue = require('./lib/vue')
 const vueNode = require('./lib/vue-node')
+const inquirer = require('inquirer')
+const rm = require('rimraf').sync
 
 program
     .usage('<template-name> [project-name]')
@@ -34,7 +38,7 @@ const name = inPlace ? path.relative('../', process.cwd()) : rawName
 const to = path.resolve(rawName || '.')
 const clone = program.clone || false
 
-const tmp = path.join(home, '.vue-templates', template.replace(/\//g, '-'))
+const tmp = path.join(home, '.jb-seeds', template.replace(/\//g, '-'))
 if (program.offline) {
     console.log(`> Use cached template at ${chalk.yellow(tildify(tmp))}`)
     template = tmp
@@ -46,23 +50,43 @@ process.on('exit', () => {
     console.log()
 })
 
-if (exists(to)) {
-    inquirer.prompt([{
-        type: 'confirm',
-        message: inPlace
-            ? 'Generate project in current directory?'
-            : 'Target directory exists. Continue?',
-        name: 'ok'
-    }]).then(answers => {
-        if (answers.ok) {
-            run()
-        }
-    }).catch(logger.fatal)
-} else {
-    run()
-}
+// if (exists(to)) {
+//     inquirer.prompt([{
+//         type: 'confirm',
+//         message: inPlace
+//             ? 'Generate project in current directory?'
+//             : 'Target directory exists. Continue?',
+//         name: 'ok'
+//     }]).then(answers => {
+//         console.log(answers)
+//         if (answers.ok) {
+//             run()
+//         }
+//     }).catch(logger.fatal)
+// } else {
+//     run()
+// }
+
+run()
 
 function run() {
     vue.start()
     vueNode.start()
+    console.log("xx", tmp, template)
+
+    const spinner = ora('downloading template')
+    spinner.start()
+    if (exists(tmp)) rm(tmp)
+
+    const officialTemplate = 'eynStudio/jb-seed#' + template
+
+    download(officialTemplate, tmp, { clone }, err => {
+        spinner.stop()
+        if (err) logger.fatal('Failed to download repo ' + template + ': ' + err.message.trim())
+        // generate(name, tmp, to, err => {
+        //     if (err) logger.fatal(err)
+        //     console.log()
+        //     logger.success('Generated "%s".', name)
+        // })
+    })
 }
